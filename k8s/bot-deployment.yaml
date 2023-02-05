@@ -1,0 +1,36 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: bot-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      component: bot
+  template:
+    metadata:
+      labels:
+        component: bot
+    spec:
+      containers:
+        - name: bot
+          image: ghcr.io/tashima42/awa-bot:main
+          env:
+            - name: DB_USER
+              value: outtakes
+            - name: DB_NAME
+              value: postgres
+            - name: DB_HOST
+              value: postgres-cluster-ip-service
+            - name: DB_PORT
+              value: '5432'
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: pgpassword
+                  key: PGPASSWORD
+            - name: TELEGRAM_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: telegramtoken
+                  key: TELEGRAM_TOKEN

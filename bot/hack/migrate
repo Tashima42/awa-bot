@@ -1,0 +1,6 @@
+#!/bin/bash
+
+migrate \
+  -path ${MIGRATE_DIR:-./bot/pkg/db/schema_migrations} \
+  -database postgres://${PGUSER:-user}:${PGPASSWORD:-password}@${PGHOST:-localhost}:${PGPORT:-5501}/postgres?sslmode=disable \
+  $@
