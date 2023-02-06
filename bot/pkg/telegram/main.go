@@ -5,10 +5,11 @@ import (
 	"database/sql"
 	"fmt"
 	"log"
+	"os"
 	"strings"
 
 	"github.com/pkg/errors"
-	"github.com/tashima42/awa-bot/pkg/db"
+	"github.com/tashima42/awa-bot/bot/pkg/db"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 )
@@ -31,8 +32,9 @@ type Telegram struct {
 	repo         *db.Repo
 }
 
-func NewBot(debug bool, apiToken string, repo *db.Repo) (*Telegram, error) {
-	bot, err := tgbotapi.NewBotAPI(apiToken)
+func NewBot(debug bool, repo *db.Repo) (*Telegram, error) {
+	telegramApiToken := os.Getenv("TELEGRAM_TOKEN")
+	bot, err := tgbotapi.NewBotAPI(telegramApiToken)
 	if err != nil {
 		return nil, err
 	}

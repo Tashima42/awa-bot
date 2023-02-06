@@ -1,18 +1,32 @@
 package main
 
 import (
-	"log"
-	"os"
-
 	"github.com/pkg/errors"
-	awabot "github.com/tashima42/awa-bot/cmd/awa-bot"
+	"github.com/spf13/cobra"
+	awaapi "github.com/tashima42/awa-bot/bot/api/cmd/awa-api"
+	awabot "github.com/tashima42/awa-bot/bot/cmd/awa-bot"
+	"github.com/tashima42/awa-bot/bot/pkg/db"
+	"log"
 )
 
 func main() {
-	log.Println("starting application")
-	telegramApiToken := os.Getenv("TELEGRAM_TOKEN")
-	log.Println("initiating command")
-	rootCmd := awabot.InitCommand(telegramApiToken)
+	log.Println("running awa-bot command")
+	var conf db.Config
+	conf.FromEnv()
+	log.Println("opening database")
+	repo, err := db.Open(conf)
+	if err != nil {
+		log.Panic(errors.Wrap(err, "failed to open database"))
+	}
+	rootCmd := &cobra.Command{
+		Use:   "awa",
+		Short: "awa is a command line tool for awa-bot",
+		Long:  "awa is a command line tool for awa-bot",
+	}
+	log.Println("adding bot command")
+	rootCmd.AddCommand(awabot.Command(repo))
+	log.Printf("add api command")
+	rootCmd.AddCommand(awaapi.Command(repo))
 	log.Println("executing command")
 	if err := rootCmd.Execute(); err != nil {
 		log.Fatal(errors.Wrap(err, "failed to execute command"))

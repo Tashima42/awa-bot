@@ -7,7 +7,7 @@ import (
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	"github.com/jmoiron/sqlx"
 	"github.com/pkg/errors"
-	"github.com/tashima42/awa-bot/pkg/db"
+	"github.com/tashima42/awa-bot/bot/pkg/db"
 	"strconv"
 	"strings"
 	"time"

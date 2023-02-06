@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"github.com/golang-migrate/migrate/v4/source"
 	"log"
 	"os"
 	"strconv"
@@ -14,7 +15,9 @@ import (
 )
 
 type Repo struct {
-	db *sqlx.DB
+	db      *sqlx.DB
+	config  Config
+	migrate source.Driver
 }
 
 // Config database connection configuration
@@ -71,7 +74,7 @@ func Open(conf Config) (*Repo, error) {
 	if err := repo.db.Ping(); err != nil {
 		return nil, errors.Wrapf(err, "could not ping db: host=%s db=%s user=%s ", conf.Host, conf.DBName, conf.User)
 	}
-
+	repo.config = conf
 	return repo, nil
 }
 
