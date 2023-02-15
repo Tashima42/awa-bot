@@ -276,7 +276,10 @@ func (t *Telegram) registerGoalHandler() (string, Handler) {
 			if err != nil {
 				return err
 			}
-			t.SendMessage(message.Chat.ID, fmt.Sprintf("Done, your new goal is %dml", goal), nil)
+			msg := fmt.Sprintf("Done, your new goal is %dml", goal)
+			callback := tgbotapi.NewCallback(callbackQuery.ID, callbackQuery.Data)
+			t.bot.Request(callback)
+			t.SendMessage(message.Chat.ID, msg, nil)
 			return nil
 		},
 	}
@@ -345,6 +348,8 @@ func (t *Telegram) registerWaterHandler() (string, Handler) {
 			if amount < 0 {
 				msg = fmt.Sprintf("Ok, %s, removed %dml from your goal", callbackQuery.From.FirstName, amount)
 			}
+			callback := tgbotapi.NewCallback(callbackQuery.ID, callbackQuery.Data)
+			t.bot.Request(callback)
 			t.SendMessage(message.Chat.ID, msg, nil)
 			t.SendMessage(message.Chat.ID, *goalMsg, nil)
 			return nil
