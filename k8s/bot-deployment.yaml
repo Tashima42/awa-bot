@@ -16,6 +16,8 @@ spec:
         - name: bot
           image: ghcr.io/tashima42/awa-bot:main
           env:
+            - name: ARGS
+              value: bot
             - name: DB_USER
               value: outtakes
             - name: DB_NAME
