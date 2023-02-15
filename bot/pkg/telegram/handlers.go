@@ -7,7 +7,7 @@ import (
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	"github.com/jmoiron/sqlx"
 	"github.com/pkg/errors"
-	"github.com/tashima42/awa-bot/pkg/db"
+	"github.com/tashima42/awa-bot/bot/pkg/db"
 	"strconv"
 	"strings"
 	"time"
@@ -276,7 +276,13 @@ func (t *Telegram) registerGoalHandler() (string, Handler) {
 			if err != nil {
 				return err
 			}
-			t.SendMessage(message.Chat.ID, fmt.Sprintf("Done, your new goal is %dml", goal), nil)
+			msg := fmt.Sprintf("Done, your new goal is %dml", goal)
+			callback := tgbotapi.NewCallback(callbackQuery.ID, callbackQuery.Data)
+			_, err = t.bot.Request(callback)
+			if err != nil {
+				return err
+			}
+			t.SendMessage(message.Chat.ID, msg, nil)
 			return nil
 		},
 	}
@@ -344,6 +350,11 @@ func (t *Telegram) registerWaterHandler() (string, Handler) {
 			msg := fmt.Sprintf("Great, %s, added %dml to your goal", callbackQuery.From.FirstName, amount)
 			if amount < 0 {
 				msg = fmt.Sprintf("Ok, %s, removed %dml from your goal", callbackQuery.From.FirstName, amount)
+			}
+			callback := tgbotapi.NewCallback(callbackQuery.ID, callbackQuery.Data)
+			_, err = t.bot.Request(callback)
+			if err != nil {
+				return err
 			}
 			t.SendMessage(message.Chat.ID, msg, nil)
 			t.SendMessage(message.Chat.ID, *goalMsg, nil)

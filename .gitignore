@@ -1,3 +1,7 @@
 /data/
+/bot/data/
 /bot/tmp/
-/tmp
+/tmp/
+/post/
+/bot/post/
+/bot/api/skaffold
