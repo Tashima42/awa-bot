@@ -1,0 +1,13 @@
+apiVersion: traefik.containo.us/v1alpha1
+kind: IngressRoute
+metadata:
+  name: api-ingressroute
+spec:
+  entryPoints:
+    - web
+  routes:
+    - kind: Rule
+      match: Host("awa.tashima.space")
+      services:
+        - name: api-service
+          port: 8096

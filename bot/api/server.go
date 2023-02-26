@@ -11,7 +11,7 @@ import (
 	"github.com/tashima42/awa-bot/bot/api/graph"
 )
 
-const defaultPort = "8080"
+const defaultPort = "8096"
 
 func Serve(repo *db.Repo) {
 	port := os.Getenv("PORT")
