@@ -174,8 +174,24 @@ func (t *Telegram) enterCompetitionHandler() (string, Handler) {
 func (t *Telegram) askForRegisterWaterKeyboardHandler() (string, Handler) {
 	return "water", Handler{
 		command: true,
-		hydrate: false,
-		exec: func(message *tgbotapi.Message, _ *TgContext, _ *tgbotapi.CallbackQuery) error {
+		hydrate: true,
+		exec: func(message *tgbotapi.Message, tgCtx *TgContext, _ *tgbotapi.CallbackQuery) error {
+			waterStrings := strings.Split(message.Text, " ")
+			if len(waterStrings) > 1 {
+				amount, err := strconv.Atoi(waterStrings[1])
+				if err != nil {
+					return err
+				}
+				ctx, cancel := context.WithCancel(context.Background())
+				defer cancel()
+				err = t.repo.RegisterWater(ctx, db.Water{UserId: tgCtx.user.Id, Amount: amount})
+				if err != nil {
+					return err
+				}
+				msg := fmt.Sprintf("Great, %s, added %dml to your goal", message.From.UserName, amount)
+				t.SendMessage(message.Chat.ID, msg, nil)
+				return nil
+			}
 			var keyboard = tgbotapi.NewInlineKeyboardMarkup(
 				tgbotapi.NewInlineKeyboardRow(
 					tgbotapi.NewInlineKeyboardButtonData("100ml", "waterCallback|100"),
@@ -359,7 +375,7 @@ func (t *Telegram) registerWaterHandler() (string, Handler) {
 			if err != nil {
 				return errors.Wrap(err, "failed to begin db transaction")
 			}
-			err = t.repo.RegisterWater(ctx, db.Water{UserId: tgCtx.user.Id, Amount: amount})
+			err = t.repo.RegisterWaterTxx(tx, db.Water{UserId: tgCtx.user.Id, Amount: amount})
 			if err != nil {
 				return err
 			}
@@ -372,9 +388,9 @@ func (t *Telegram) registerWaterHandler() (string, Handler) {
 				return err
 			}
 
-			msg := fmt.Sprintf("Great, %s, added %dml to your goal", callbackQuery.From.FirstName, amount)
+			msg := fmt.Sprintf("Great, %s, added %dml to your goal", callbackQuery.From.UserName, amount)
 			if amount < 0 {
-				msg = fmt.Sprintf("Ok, %s, removed %dml from your goal", callbackQuery.From.FirstName, amount)
+				msg = fmt.Sprintf("Ok, %s, removed %dml from your goal", callbackQuery.From.UserName, amount)
 			}
 			callback := tgbotapi.NewCallback(callbackQuery.ID, callbackQuery.Data)
 			_, err = t.bot.Request(callback)
