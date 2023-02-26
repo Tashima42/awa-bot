@@ -16,6 +16,8 @@ spec:
         - name: bot
           image: ghcr.io/tashima42/awa-bot:main
           env:
+            - name: TZ
+              value: "GMT-3"
             - name: ARGS
               value: bot
             - name: DB_USER

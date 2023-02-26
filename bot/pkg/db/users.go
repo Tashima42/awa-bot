@@ -11,6 +11,7 @@ import (
 type User struct {
 	Id         string    `db:"id"`
 	TelegramID int64     `db:"telegram_id"`
+	Name       string    `db:"name"`
 	CreatedAt  time.Time `db:"created_at"`
 	UpdatedAt  time.Time `db:"updated_at"`
 }
@@ -44,7 +45,14 @@ func (r *Repo) GetUser(ctx context.Context, telegramID int64) (*User, error) {
 }
 
 func (r *Repo) GetUserTxx(tx *sqlx.Tx, telegramID int64) (*User, error) {
-	query := "SELECT id, telegram_id, created_at, updated_at FROM users WHERE telegram_id = $1 LIMIT 1;"
+	query := `SELECT 
+		id AS id, 
+		telegram_id AS telegram_id, 
+		created_at AS created_at, 
+		updated_at AS updated_at 
+	FROM users 
+	WHERE telegram_id = $1 
+	LIMIT 1;`
 	record := &User{}
 	err := tx.Get(record, query, telegramID)
 	return record, err

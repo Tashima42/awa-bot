@@ -8,6 +8,7 @@ import (
 	"github.com/jmoiron/sqlx"
 	"github.com/pkg/errors"
 	"github.com/tashima42/awa-bot/bot/pkg/db"
+	"log"
 	"strconv"
 	"strings"
 	"time"
@@ -37,22 +38,22 @@ func (t *Telegram) askForCompetitionDurationKeyboardHandler() (string, Handler) 
 		exec: func(message *tgbotapi.Message, _ *TgContext, _ *tgbotapi.CallbackQuery) error {
 			var keyboard = tgbotapi.NewInlineKeyboardMarkup(
 				tgbotapi.NewInlineKeyboardRow(
-					tgbotapi.NewInlineKeyboardButtonData("1 day", "newCompetitionCallback|1"),
-					tgbotapi.NewInlineKeyboardButtonData("2 days", "newCompetitionCallback|2"),
-					tgbotapi.NewInlineKeyboardButtonData("3 days", "newCompetitionCallback|3"),
-					tgbotapi.NewInlineKeyboardButtonData("4 days", "newCompetitionCallback|4"),
+					tgbotapi.NewInlineKeyboardButtonData("1 day", "startCompetitionCallback|1"),
+					tgbotapi.NewInlineKeyboardButtonData("2 days", "startCompetitionCallback|2"),
+					tgbotapi.NewInlineKeyboardButtonData("3 days", "startCompetitionCallback|3"),
+					tgbotapi.NewInlineKeyboardButtonData("4 days", "startCompetitionCallback|4"),
 				),
 				tgbotapi.NewInlineKeyboardRow(
-					tgbotapi.NewInlineKeyboardButtonData("5 days", "newCompetitionCallback|5"),
-					tgbotapi.NewInlineKeyboardButtonData("6 days", "newCompetitionCallback|6"),
-					tgbotapi.NewInlineKeyboardButtonData("1 week", "newCompetitionCallback|7"),
-					tgbotapi.NewInlineKeyboardButtonData("2 weeks", "newCompetitionCallback|14"),
+					tgbotapi.NewInlineKeyboardButtonData("5 days", "startCompetitionCallback|5"),
+					tgbotapi.NewInlineKeyboardButtonData("6 days", "startCompetitionCallback|6"),
+					tgbotapi.NewInlineKeyboardButtonData("1 week", "startCompetitionCallback|7"),
+					tgbotapi.NewInlineKeyboardButtonData("2 weeks", "startCompetitionCallback|14"),
 				),
 				tgbotapi.NewInlineKeyboardRow(
-					tgbotapi.NewInlineKeyboardButtonData("3 weeks", "newCompetitionCallback|21"),
-					tgbotapi.NewInlineKeyboardButtonData("1 month", "newCompetitionCallback|30"),
-					tgbotapi.NewInlineKeyboardButtonData("2 months", "newCompetitionCallback|60"),
-					tgbotapi.NewInlineKeyboardButtonData("3 months", "newCompetitionCallback|90"),
+					tgbotapi.NewInlineKeyboardButtonData("3 weeks", "startCompetitionCallback|21"),
+					tgbotapi.NewInlineKeyboardButtonData("1 month", "startCompetitionCallback|30"),
+					tgbotapi.NewInlineKeyboardButtonData("2 months", "startCompetitionCallback|60"),
+					tgbotapi.NewInlineKeyboardButtonData("3 months", "startCompetitionCallback|90"),
 				),
 			)
 			t.SendMessage(message.Chat.ID, "Competition duration", &keyboard)
@@ -62,17 +63,30 @@ func (t *Telegram) askForCompetitionDurationKeyboardHandler() (string, Handler) 
 }
 
 func (t *Telegram) startCompetitionHandler() (string, Handler) {
-	return "newCompetitionCallback", Handler{
+	return "startCompetitionCallback", Handler{
 		command:  true,
 		hydrate:  true,
 		callback: false,
 		exec: func(message *tgbotapi.Message, tgCtx *TgContext, callbackQuery *tgbotapi.CallbackQuery) error {
 			ctx, cancel := context.WithCancel(context.Background())
 			defer cancel()
+			tx, err := t.repo.BeginTxx(ctx, &sql.TxOptions{})
+			if err != nil {
+				return errors.Wrap(err, "failed to start transaction")
+			}
+			competition, err := t.repo.GetCompetitionByChatTxx(tx, message.Chat.ID)
+			if err != nil && err != sql.ErrNoRows {
+				return errors.Wrap(err, "failed to get competition")
+			}
+			if competition != nil {
+				t.SendMessage(message.Chat.ID, "There is already a competition running, use /competition to see the status", nil)
+				return nil
+			}
 			days, err := strconv.Atoi(strings.Split(callbackQuery.Data, "|")[1])
 			if err != nil {
 				return errors.Wrap(err, "failed to start competition")
 			}
+			log.Printf("starting competition for %d days in chat %d", days, message.Chat.ID)
 			err = t.repo.RegisterCompetition(ctx, db.Competition{
 				Users:     []string{tgCtx.user.Id},
 				ChatID:    message.Chat.ID,
@@ -132,7 +146,18 @@ func (t *Telegram) enterCompetitionHandler() (string, Handler) {
 			if competition == nil || err != nil {
 				return errors.Wrap(db.Rollback(tx, err), "failed to find competition in this chat")
 			}
-			err = t.repo.RegisterUserInCompetitionTxx(tx, tgCtx.user.Id, competition.Id)
+			if competition.EndDate.Before(time.Now()) {
+				return errors.Wrap(db.Rollback(tx, err), "competition has ended")
+			}
+			if competition.StartDate.After(time.Now()) {
+				return errors.Wrap(db.Rollback(tx, err), "competition has not started yet")
+			}
+			if competition.IsUserRegistered(tgCtx.user.Id) {
+				log.Printf("user %s is already registered in competition %s", tgCtx.user.Id, competition.Id)
+				t.SendMessage(message.Chat.ID, "You are already registered in this competition", nil)
+				return errors.Wrap(db.Rollback(tx, err), "user is already registered in this competition")
+			}
+			err = t.repo.RegisterUsersInCompetitionTxx(tx, []string{tgCtx.user.Id}, competition.Id)
 			if err != nil {
 				return errors.Wrap(db.Rollback(tx, err), "failed to register user in competition")
 			}
