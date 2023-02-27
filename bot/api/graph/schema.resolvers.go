@@ -45,16 +45,12 @@ func (r *mutationResolver) Migrate(ctx context.Context, input model.MigrateInput
 	}, nil
 }
 
-// Users is the resolver for the users field.
-func (r *queryResolver) Users(ctx context.Context) ([]*model.User, error) {
-	panic(fmt.Errorf("not implemented: Users - users"))
+// RegisterWater is the resolver for the registerWater field.
+func (r *mutationResolver) RegisterWater(ctx context.Context, input model.RegisterWaterInput) (*model.RegisterWaterOutput, error) {
+	panic(fmt.Errorf("not implemented: RegisterWater - registerWater"))
 }
 
 // Mutation returns MutationResolver implementation.
 func (r *Resolver) Mutation() MutationResolver { return &mutationResolver{r} }
 
-// Query returns QueryResolver implementation.
-func (r *Resolver) Query() QueryResolver { return &queryResolver{r} }
-
 type mutationResolver struct{ *Resolver }
-type queryResolver struct{ *Resolver }
