@@ -13,6 +13,10 @@ type RegisterWaterOutput {
   success: Boolean
 }
 
+type Query {
+  migrateOutput: MigrateOutput
+}
+
 input MigrateInput {
   version: String
 }

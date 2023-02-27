@@ -37,6 +37,7 @@ type Config struct {
 
 type ResolverRoot interface {
 	Mutation() MutationResolver
+	Query() QueryResolver
 }
 
 type DirectiveRoot struct {
@@ -54,6 +55,7 @@ type ComplexityRoot struct {
 	}
 
 	Query struct {
+		MigrateOutput func(childComplexity int) int
 	}
 
 	RegisterWaterOutput struct {
@@ -64,6 +66,9 @@ type ComplexityRoot struct {
 type MutationResolver interface {
 	Migrate(ctx context.Context, input model.MigrateInput) (*model.MigrateOutput, error)
 	RegisterWater(ctx context.Context, input model.RegisterWaterInput) (*model.RegisterWaterOutput, error)
+}
+type QueryResolver interface {
+	MigrateOutput(ctx context.Context) (*model.MigrateOutput, error)
 }
 
 type executableSchema struct {
@@ -118,6 +123,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Mutation.RegisterWater(childComplexity, args["input"].(model.RegisterWaterInput)), true
+
+	case "Query.migrateOutput":
+		if e.complexity.Query.MigrateOutput == nil {
+			break
+		}
+
+		return e.complexity.Query.MigrateOutput(childComplexity), true
 
 	case "RegisterWaterOutput.success":
 		if e.complexity.RegisterWaterOutput.Success == nil {
@@ -489,6 +501,52 @@ func (ec *executionContext) fieldContext_Mutation_registerWater(ctx context.Cont
 	if fc.Args, err = ec.field_Mutation_registerWater_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_migrateOutput(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Query_migrateOutput(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().MigrateOutput(rctx)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.MigrateOutput)
+	fc.Result = res
+	return ec.marshalOMigrateOutput2ᚖgithubᚗcomᚋtashima42ᚋawaᚑbotᚋbotᚋapiᚋgraphᚋmodelᚐMigrateOutput(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Query_migrateOutput(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "success":
+				return ec.fieldContext_MigrateOutput_success(ctx, field)
+			case "version":
+				return ec.fieldContext_MigrateOutput_version(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type MigrateOutput", field.Name)
+		},
 	}
 	return fc, nil
 }
@@ -2643,6 +2701,26 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("Query")
+		case "migrateOutput":
+			field := field
+
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_migrateOutput(ctx, field)
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx, innerFunc)
+			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return rrm(innerCtx)
+			})
 		case "__type":
 
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {

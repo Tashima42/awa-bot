@@ -7,6 +7,8 @@ package graph
 import (
 	"context"
 	"fmt"
+	"github.com/tashima42/awa-bot/bot/api/auth"
+	"github.com/tashima42/awa-bot/bot/pkg/db"
 	"log"
 	"strconv"
 
@@ -47,10 +49,36 @@ func (r *mutationResolver) Migrate(ctx context.Context, input model.MigrateInput
 
 // RegisterWater is the resolver for the registerWater field.
 func (r *mutationResolver) RegisterWater(ctx context.Context, input model.RegisterWaterInput) (*model.RegisterWaterOutput, error) {
-	panic(fmt.Errorf("not implemented: RegisterWater - registerWater"))
+	if input.Water == nil {
+		return nil, fmt.Errorf("water is required")
+	}
+	if input.Water.Amount == nil {
+		return nil, fmt.Errorf("amount is required")
+	}
+	user := auth.ForContext(ctx)
+	if user == nil {
+		return nil, fmt.Errorf("missing user in context")
+	}
+	err := r.Repo.RegisterWater(ctx, db.Water{UserId: user.Id, Amount: *input.Water.Amount})
+	if err != nil {
+		return nil, werrors.Wrap(err, "failed to register water")
+	}
+	success := true
+	return &model.RegisterWaterOutput{
+		Success: &success,
+	}, nil
+}
+
+// MigrateOutput is the resolver for the migrateOutput field.
+func (r *queryResolver) MigrateOutput(ctx context.Context) (*model.MigrateOutput, error) {
+	panic(fmt.Errorf("not implemented: MigrateOutput - migrateOutput"))
 }
 
 // Mutation returns MutationResolver implementation.
 func (r *Resolver) Mutation() MutationResolver { return &mutationResolver{r} }
 
+// Query returns QueryResolver implementation.
+func (r *Resolver) Query() QueryResolver { return &queryResolver{r} }
+
 type mutationResolver struct{ *Resolver }
+type queryResolver struct{ *Resolver }

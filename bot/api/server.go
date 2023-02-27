@@ -1,6 +1,9 @@
 package server
 
 import (
+	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/chi/v5/middleware"
+	"github.com/tashima42/awa-bot/bot/api/auth"
 	"github.com/tashima42/awa-bot/bot/pkg/db"
 	"log"
 	"net/http"
@@ -19,11 +22,14 @@ func Serve(repo *db.Repo) {
 		port = defaultPort
 	}
 
-	srv := handler.NewDefaultServer(graph.NewExecutableSchema(graph.Config{Resolvers: &graph.Resolver{Repo: repo}}))
+	router := chi.NewRouter()
+	router.Use(middleware.Logger)
+	router.Use(auth.Middleware(repo))
 
-	http.Handle("/", playground.Handler("GraphQL playground", "/query"))
-	http.Handle("/query", srv)
+	srv := handler.NewDefaultServer(graph.NewExecutableSchema(graph.Config{Resolvers: &graph.Resolver{Repo: repo}}))
+	router.Handle("/", playground.Handler("GraphQL playground", "/query"))
+	router.Handle("/query", srv)
 
 	log.Printf("connect to http://localhost:%s/ for GraphQL playground", port)
-	log.Fatal(http.ListenAndServe(":"+port, nil))
+	log.Fatal(http.ListenAndServe(":"+port, router))
 }
