@@ -18,6 +18,13 @@ func main() {
 	if err != nil {
 		log.Panic(errors.Wrap(err, "failed to open database"))
 	}
+	if repo == nil {
+		log.Panic(errors.Wrap(err, "repo is nil"))
+	}
+	_, _, err = repo.Up()
+	if err != nil && err.Error() != "no change" {
+		log.Panic(errors.Wrap(err, "failed to run migrations"))
+	}
 	rootCmd := &cobra.Command{
 		Use:   "awa",
 		Short: "awa is a command line tool for awa-bot",

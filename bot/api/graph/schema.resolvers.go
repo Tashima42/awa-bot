@@ -40,10 +40,11 @@ func (r *mutationResolver) Migrate(ctx context.Context, input model.MigrateInput
 			return nil, err
 		}
 	}
+	success := !dirty
 	v := strconv.FormatUint(uint64(currentVersion), 10)
 	return &model.MigrateOutput{
 		Version: &v,
-		Success: &dirty,
+		Success: &success,
 	}, nil
 }
 
