@@ -495,7 +495,10 @@ func (t *Telegram) helpMessage(message *tgbotapi.Message, _ *TgContext, _ *tgbot
 /enter_competition: Enter the competition in this group chat
 
 /new_goal: Set a new drinking goal
-/goal: See hou you're doing with your goal today'`,
+/goal: See hou you're doing with your goal today
+/apikey: Get your api key to use the api
+/delete_apikey: Delete your api key
+`,
 		nil,
 	)
 	return nil

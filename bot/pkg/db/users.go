@@ -47,7 +47,6 @@ func (r *Repo) GetUser(ctx context.Context, telegramID int64) (*User, error) {
 func (r *Repo) GetUserTxx(tx *sqlx.Tx, telegramID int64) (*User, error) {
 	query := `SELECT 
 		id AS id, 
-		name AS name,
 		telegram_id AS telegram_id, 
 		created_at AS created_at, 
 		updated_at AS updated_at 
