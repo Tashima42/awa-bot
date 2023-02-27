@@ -12,9 +12,11 @@ spec:
       labels:
         component: api
     spec:
+      terminationGracePeriodSeconds: 30
       containers:
         - name: api
           image: ghcr.io/tashima42/awa-bot:main
+          imagePullPolicy: "Always"
           env:
             - name: TZ
               value: "GMT-3"
