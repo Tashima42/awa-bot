@@ -2,24 +2,38 @@
 #
 # https://gqlgen.com/getting-started/
 
-type User {
-  id: ID!
-  name: String!
-}
-
-type Query {
-  users: [User!]!
-}
-
-input MigrateInput {
-  version: String
-}
+scalar DateTime
 
 type MigrateOutput {
   success: Boolean
   version: String
 }
 
+type RegisterWaterOutput {
+  success: Boolean
+}
+
+type Query {
+  migrateOutput: MigrateOutput
+}
+
+input MigrateInput {
+  version: String
+}
+
+input Water {
+  id: ID
+  userId: ID
+  amount: Int
+  createdAt: DateTime
+  updatedAt: DateTime
+}
+
+input RegisterWaterInput {
+  water: Water!
+}
+
 type Mutation {
   migrate(input: MigrateInput!): MigrateOutput
+  registerWater(input: RegisterWaterInput!): RegisterWaterOutput
 }

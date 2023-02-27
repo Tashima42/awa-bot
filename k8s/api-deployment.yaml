@@ -1,25 +1,25 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: bot-deployment
+  name: api-deployment
 spec:
   replicas: 1
   selector:
     matchLabels:
-      component: bot
+      component: api
   template:
     metadata:
       labels:
-        component: bot
+        component: api
     spec:
       containers:
-        - name: bot
+        - name: api
           image: ghcr.io/tashima42/awa-bot:main
           env:
             - name: TZ
               value: "GMT-3"
             - name: ARGS
-              value: bot
+              value: api
             - name: DB_USER
               value: outtakes
             - name: DB_NAME

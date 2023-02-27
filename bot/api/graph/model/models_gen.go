@@ -11,7 +11,18 @@ type MigrateOutput struct {
 	Version *string `json:"version"`
 }
 
-type User struct {
-	ID   string `json:"id"`
-	Name string `json:"name"`
+type RegisterWaterInput struct {
+	Water *Water `json:"water"`
+}
+
+type RegisterWaterOutput struct {
+	Success *bool `json:"success"`
+}
+
+type Water struct {
+	ID        *string `json:"id"`
+	UserID    *string `json:"userId"`
+	Amount    *int    `json:"amount"`
+	CreatedAt *string `json:"createdAt"`
+	UpdatedAt *string `json:"updatedAt"`
 }

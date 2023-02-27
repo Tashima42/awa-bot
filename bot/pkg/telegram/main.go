@@ -73,7 +73,7 @@ func (t *Telegram) HandleUpdates() {
 				tgCtx := TgContext{}
 				if handler.hydrate {
 					log.Printf("hydrating user, message from id: %d", update.Message.From.ID)
-					err := t.hydrateUser(&tgCtx, update.Message.From.ID)
+					err := t.hydrateUser(&tgCtx, update.Message.From.ID, update.Message.From.UserName)
 					if err != nil {
 						log.Println(errors.Wrapf(err, "failed to hydrate user, chat id: %d", update.Message.Chat.ID))
 						t.SendMessage(update.Message.Chat.ID, err.Error(), nil)
@@ -110,7 +110,7 @@ func (t *Telegram) HandleUpdates() {
 			tgCtx := TgContext{}
 			if handler.hydrate {
 				log.Println("hydrating")
-				err := t.hydrateUser(&tgCtx, update.CallbackQuery.From.ID)
+				err := t.hydrateUser(&tgCtx, update.CallbackQuery.From.ID, update.CallbackQuery.From.UserName)
 				if err != nil {
 					log.Println(errors.Wrap(err, "failed to hydrate"))
 					t.SendMessage(update.CallbackQuery.Message.Chat.ID, err.Error(), nil)
@@ -138,7 +138,7 @@ func (t *Telegram) SendMessage(chatID int64, text string, keyboard *tgbotapi.Inl
 	}
 }
 
-func (t *Telegram) hydrateUser(tgCtx *TgContext, telegramID int64) error {
+func (t *Telegram) hydrateUser(tgCtx *TgContext, telegramID int64, name string) error {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 	tx, err := t.repo.BeginTxx(ctx, nil)
@@ -153,7 +153,10 @@ func (t *Telegram) hydrateUser(tgCtx *TgContext, telegramID int64) error {
 		tgCtx.user = user
 		return tx.Commit()
 	}
-	err = t.repo.RegisterUserTxx(tx, db.User{TelegramID: telegramID})
+	err = t.repo.RegisterUserTxx(tx, db.User{
+		TelegramID: telegramID,
+		Name:       name,
+	})
 	if err != nil {
 		fmt.Println(err)
 		return errors.Wrap(db.Rollback(tx, err), "failed to create user")

@@ -4,8 +4,10 @@ go 1.19
 
 require (
 	github.com/99designs/gqlgen v0.17.24
+	github.com/go-chi/chi/v5 v5.0.8
 	github.com/go-telegram-bot-api/telegram-bot-api/v5 v5.5.1
 	github.com/golang-migrate/migrate/v4 v4.15.2
+	github.com/google/uuid v1.3.0
 	github.com/hashicorp/go-multierror v1.1.1
 	github.com/jmoiron/sqlx v1.3.1
 	github.com/lib/pq v1.10.7

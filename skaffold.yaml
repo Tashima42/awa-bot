@@ -15,6 +15,7 @@ build:
         DB_HOST: ${DB_HOST}
         DB_PASSWORD: ${DB_PASSWORD}
         DB_PORT: ${DB_PORT}
+        TZ: ${TZ}
     sync:
       auto: true
   - image: postgres

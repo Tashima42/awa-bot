@@ -30,6 +30,10 @@ spec:
               value: outtakes
             - name: POSTGRES_DB
               value: postgres
+            - name: TZ
+              value: "GMT-3"
+            - name: PGTZ
+              value: "GMT-3"
             - name: POSTGRES_PASSWORD
               valueFrom:
                 secretKeyRef:
