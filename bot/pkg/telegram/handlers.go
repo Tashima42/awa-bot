@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"fmt"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
+	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx"
 	"github.com/pkg/errors"
 	"github.com/tashima42/awa-bot/bot/pkg/db"
@@ -28,6 +29,8 @@ func (t *Telegram) RegisterHandlers() {
 	t.AddHandler(t.askForRegisterGoalKeyboardHandler())
 	t.AddHandler(t.registerGoalHandler())
 	t.AddHandler(t.goalHandler())
+	t.AddHandler(t.registerApiKeyHandler())
+	t.AddHandler(t.deleteApiKeyHandler())
 }
 
 func (t *Telegram) askForCompetitionDurationKeyboardHandler() (string, Handler) {
@@ -399,6 +402,64 @@ func (t *Telegram) registerWaterHandler() (string, Handler) {
 			}
 			t.SendMessage(message.Chat.ID, msg, nil)
 			t.SendMessage(message.Chat.ID, *goalMsg, nil)
+			return nil
+		},
+	}
+}
+
+func (t *Telegram) registerApiKeyHandler() (string, Handler) {
+	return "apikey", Handler{
+		command:  true,
+		hydrate:  true,
+		callback: false,
+		exec: func(message *tgbotapi.Message, tgCtx *TgContext, _ *tgbotapi.CallbackQuery) error {
+			if message.Chat.Type != "private" {
+				return errors.New("this command is only available in private chat")
+			}
+			ctx, cancel := context.WithCancel(context.Background())
+			defer cancel()
+			if tgCtx == nil || tgCtx.user == nil {
+				return errors.New("context or user missing")
+			}
+			apiKey := uuid.NewString()
+			err := t.repo.RegisterApiKey(ctx, db.Auth{UserID: tgCtx.user.Id, ApiKey: apiKey})
+			if err != nil {
+				if strings.Contains(err.Error(), "duplicate key value violates unique constraint") {
+					t.SendMessage(message.Chat.ID, "You already have an api key, go back in your history to get it, or use /delete_apikey to invalidate and get a new one", nil)
+					return nil
+				}
+				return err
+			}
+			t.SendMessage(message.Chat.ID, "Done, your api key has been registered", nil)
+			t.SendMessage(message.Chat.ID, apiKey, nil)
+			return nil
+		},
+	}
+}
+
+func (t *Telegram) deleteApiKeyHandler() (string, Handler) {
+	return "delete_apikey", Handler{
+		command:  true,
+		hydrate:  true,
+		callback: false,
+		exec: func(message *tgbotapi.Message, tgCtx *TgContext, _ *tgbotapi.CallbackQuery) error {
+			if message.Chat.Type != "private" {
+				return errors.New("this command is only available in private chat")
+			}
+			ctx, cancel := context.WithCancel(context.Background())
+			defer cancel()
+			if tgCtx == nil || tgCtx.user == nil {
+				return errors.New("context or user missing")
+			}
+			err := t.repo.DeleteApiKey(ctx, tgCtx.user.Id)
+			if err != nil {
+				if err == sql.ErrNoRows {
+					t.SendMessage(message.Chat.ID, "You don't have an api key, use /apikey to get one", nil)
+					return nil
+				}
+				return err
+			}
+			t.SendMessage(message.Chat.ID, "Done, your api key was removed", nil)
 			return nil
 		},
 	}
