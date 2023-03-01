@@ -374,7 +374,7 @@ func (t *Telegram) registerWaterHandler() (string, Handler) {
 			if tgCtx == nil || tgCtx.user == nil {
 				return errors.New("context or user missing")
 			}
-			tx, err := t.repo.BeginTxx(ctx, &sql.TxOptions{ReadOnly: true})
+			tx, err := t.repo.BeginTxx(ctx, nil)
 			if err != nil {
 				return errors.Wrap(err, "failed to begin db transaction")
 			}
