@@ -53,6 +53,15 @@ func (r *Repo) DeleteApiKeyTxx(tx *sqlx.Tx, userID string) error {
 	return nil
 }
 
+func (r *Repo) GetApiKeyByUserId(ctx context.Context, userID string) (string, error) {
+	tx, err := r.BeginTxx(ctx, nil)
+	if err != nil {
+		return "", errors.Wrap(err, "failed to begin db transaction")
+	}
+	defer tx.Commit() //nolint:errcheck
+	return r.GetApiKeyByUserIdTxx(tx, userID)
+}
+
 func (r *Repo) GetApiKeyByUserIdTxx(tx *sqlx.Tx, userID string) (string, error) {
 	var apiKey string
 	query := `SELECT api_key FROM auth WHERE user_id = $1 LIMIT 1;`
