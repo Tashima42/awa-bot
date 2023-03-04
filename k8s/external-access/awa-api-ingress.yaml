@@ -1,0 +1,23 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+ name: awa-api-ingress
+ namespace: kube-system
+ annotations:
+   cert-manager.io/issuer: "awa-bot-http"
+spec:
+ tls:
+   - hosts:
+       - awa.tashima.space
+     secretName: tls-awa-api-ingress-http
+ rules:
+   - host: awa.tashima.space
+     http:
+       paths:
+         - path: /
+           pathType: Prefix
+           backend:
+             service:
+               name: api-service
+               port:
+                 name: web

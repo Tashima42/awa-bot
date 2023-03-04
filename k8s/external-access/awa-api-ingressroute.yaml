@@ -1,11 +1,13 @@
 apiVersion: traefik.containo.us/v1alpha1
 kind: IngressRoute
 metadata:
-  name: api-ingressroute
+  name: awa-api-ingressroute
   namespace: awa-bot
 spec:
   entryPoints:
-    - web
+    - websecure
+  tls:
+    secretName: awa-api-crt
   routes:
     - kind: Rule
       match: Host("awa.tashima.space")

@@ -48,4 +48,4 @@ jobs:
           username: ${{ secrets.SSH_USERNAME }}
           password: ${{ secrets.SSH_PWD }}
           port: ${{ secrets.SSH_PORT }}
-          script: ${{ secrets.SSH_SCRIPT }}
+          script: "/home/awa/packages/awa-bot/hack/deploy.sh"
