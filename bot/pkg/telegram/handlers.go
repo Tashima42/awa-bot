@@ -5,9 +5,9 @@ import (
 	"database/sql"
 	"fmt"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
-	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx"
 	"github.com/pkg/errors"
+	"github.com/tashima42/awa-bot/bot/pkg/auth"
 	"github.com/tashima42/awa-bot/bot/pkg/db"
 	"log"
 	"strconv"
@@ -31,6 +31,8 @@ func (t *Telegram) RegisterHandlers() {
 	t.AddHandler(t.goalHandler())
 	t.AddHandler(t.registerApiKeyHandler())
 	t.AddHandler(t.deleteApiKeyHandler())
+	t.AddHandler(t.userIDHandler())
+	t.AddHandler(t.apiInstructionsHandler())
 }
 
 func (t *Telegram) askForCompetitionDurationKeyboardHandler() (string, Handler) {
@@ -418,20 +420,43 @@ func (t *Telegram) registerApiKeyHandler() (string, Handler) {
 			}
 			ctx, cancel := context.WithCancel(context.Background())
 			defer cancel()
+			tx, err := t.repo.BeginTxx(ctx, nil)
+			if err != nil {
+				return errors.Wrap(err, "failed to begin db transaction")
+			}
 			if tgCtx == nil || tgCtx.user == nil {
 				return errors.New("context or user missing")
 			}
-			apiKey := uuid.NewString()
-			err := t.repo.RegisterApiKey(ctx, db.Auth{UserID: tgCtx.user.Id, ApiKey: apiKey})
+			_, err = t.repo.GetApiKeyByUserIdTxx(tx, tgCtx.user.Id)
+			if err != nil {
+				if !strings.Contains(err.Error(), "no rows in result set") {
+					return err
+				}
+			} else {
+				t.SendMessage(message.Chat.ID, "You already have an api key, go back in your history to get it, or use /delete_apikey to invalidate and get a new one", nil)
+				return nil
+			}
+			apiKey := auth.NewUUID()
+			apiKeyHash, err := t.hashHelper.Hash(apiKey)
+			if err != nil {
+				return err
+			}
+			err = t.repo.RegisterApiKeyTxx(tx, db.Auth{UserID: tgCtx.user.Id, ApiKey: apiKeyHash})
 			if err != nil {
 				if strings.Contains(err.Error(), "duplicate key value violates unique constraint") {
-					t.SendMessage(message.Chat.ID, "You already have an api key, go back in your history to get it, or use /delete_apikey to invalidate and get a new one", nil)
 					return nil
 				}
 				return err
 			}
+			err = tx.Commit()
+			if err != nil {
+				return err
+			}
 			t.SendMessage(message.Chat.ID, "Done, your api key has been registered", nil)
 			t.SendMessage(message.Chat.ID, apiKey, nil)
+			t.SendMessage(message.Chat.ID, "Please keep it safe, you will not be able to get it back", nil)
+			t.SendMessage(message.Chat.ID, "You can use /delete_apikey to invalidate it and get a new one", nil)
+			t.SendMessage(message.Chat.ID, "For api usage instructions, check /api", nil)
 			return nil
 		},
 	}
@@ -496,8 +521,11 @@ func (t *Telegram) helpMessage(message *tgbotapi.Message, _ *TgContext, _ *tgbot
 
 /new_goal: Set a new drinking goal
 /goal: See hou you're doing with your goal today
+
 /apikey: Get your api key to use the api
 /delete_apikey: Delete your api key
+/userid: Get your internal bot user id
+/api_instructions: Get Api usage instructions
 `,
 		nil,
 	)
@@ -510,6 +538,45 @@ func (t *Telegram) statusHandler() (string, Handler) {
 		hydrate: false,
 		exec: func(message *tgbotapi.Message, _ *TgContext, _ *tgbotapi.CallbackQuery) error {
 			t.SendMessage(message.Chat.ID, "(┛ಠ_ಠ)┛彡┻━┻", nil)
+			return nil
+		},
+	}
+}
+
+func (t *Telegram) userIDHandler() (string, Handler) {
+	return "userid", Handler{
+		command: true,
+		hydrate: true,
+		exec: func(message *tgbotapi.Message, tgCtx *TgContext, _ *tgbotapi.CallbackQuery) error {
+			if tgCtx == nil || tgCtx.user == nil {
+				return errors.New("context or user missing")
+			}
+			t.SendMessage(message.Chat.ID, "Your user id is:", nil)
+			t.SendMessage(message.Chat.ID, tgCtx.user.Id, nil)
+			return nil
+		},
+	}
+}
+
+func (t *Telegram) apiInstructionsHandler() (string, Handler) {
+	return "api_instructions", Handler{
+		command: true,
+		hydrate: true,
+		exec: func(message *tgbotapi.Message, tgCtx *TgContext, _ *tgbotapi.CallbackQuery) error {
+			if tgCtx == nil || tgCtx.user == nil {
+				return errors.New("context or user missing")
+			}
+			t.SendMessage(message.Chat.ID, `This bot works alongside a GraphQL API, you can check the schema and test it in the playground, at https://awa.tashima.space
+
+To use it, you'll need to first add two cookies in your browser:
+
+apikey: {/apikey}
+userid: {/userid}
+
+Instead of using cookies, you can also send both as Headers, using the keys:
+
+Authorization: {/apikey}
+X-UserID: {/userid}`, nil)
 			return nil
 		},
 	}

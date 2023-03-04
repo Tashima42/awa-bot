@@ -12,11 +12,12 @@ import (
 	"github.com/99designs/gqlgen/graphql/handler"
 	"github.com/99designs/gqlgen/graphql/playground"
 	"github.com/tashima42/awa-bot/bot/api/graph"
+	authHashHelper "github.com/tashima42/awa-bot/bot/pkg/auth"
 )
 
 const defaultPort = "8096"
 
-func Serve(repo *db.Repo) {
+func Serve(repo *db.Repo, hashHelper *authHashHelper.HashHelper) {
 	port := os.Getenv("PORT")
 	if port == "" {
 		port = defaultPort
@@ -24,7 +25,7 @@ func Serve(repo *db.Repo) {
 
 	router := chi.NewRouter()
 	router.Use(middleware.Logger)
-	router.Use(auth.Middleware(repo))
+	router.Use(auth.Middleware(repo, hashHelper))
 
 	srv := handler.NewDefaultServer(graph.NewExecutableSchema(graph.Config{Resolvers: &graph.Resolver{Repo: repo}}))
 	router.Handle("/", playground.Handler("GraphQL playground", "/query"))
