@@ -52,3 +52,13 @@ func (r *Repo) DeleteApiKeyTxx(tx *sqlx.Tx, userID string) error {
 	}
 	return nil
 }
+
+func (r *Repo) GetApiKeyByUserIdTxx(tx *sqlx.Tx, userID string) (string, error) {
+	var apiKey string
+	query := `SELECT api_key FROM auth WHERE user_id = $1 LIMIT 1;`
+	err := tx.Get(&apiKey, query, userID)
+	if err != nil {
+		return "", errors.Wrapf(err, "failed to get api key for %s", userID)
+	}
+	return apiKey, nil
+}

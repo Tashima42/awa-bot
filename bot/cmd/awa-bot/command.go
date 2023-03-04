@@ -1,6 +1,7 @@
 package awabot
 
 import (
+	"github.com/tashima42/awa-bot/bot/pkg/auth"
 	"github.com/tashima42/awa-bot/bot/pkg/db"
 	"log"
 
@@ -17,9 +18,10 @@ func Command(repo *db.Repo) *cobra.Command {
 		Short: "Awa bot helps you track your water consumption",
 		Long:  "Awa bot helps you track your water consumption",
 		RunE: func(cmd *cobra.Command, args []string) error {
-
+			log.Println("getting hash helper instance")
+			hashHelper := auth.GetHashHelperInstance()
 			log.Print("creating telegram bot")
-			telegram, err := telegram.NewBot(debug, repo)
+			telegram, err := telegram.NewBot(debug, repo, hashHelper)
 			if err != nil {
 				return errors.Wrap(err, "failed to start telegram bot")
 			}

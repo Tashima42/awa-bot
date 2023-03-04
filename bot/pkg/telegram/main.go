@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"github.com/tashima42/awa-bot/bot/pkg/auth"
 	"log"
 	"os"
 	"strings"
@@ -30,20 +31,22 @@ type Telegram struct {
 	updateConfig tgbotapi.UpdateConfig
 	handlers     map[string]Handler
 	repo         *db.Repo
+	hashHelper   *auth.HashHelper
 }
 
-func NewBot(debug bool, repo *db.Repo) (*Telegram, error) {
+func NewBot(debug bool, repo *db.Repo, hashHelper *auth.HashHelper) (*Telegram, error) {
 	telegramApiToken := os.Getenv("TELEGRAM_TOKEN")
 	bot, err := tgbotapi.NewBotAPI(telegramApiToken)
 	if err != nil {
 		return nil, err
 	}
 	bot.Debug = debug
-	t := Telegram{}
-	t.bot = bot
-	t.repo = repo
-	t.handlers = map[string]Handler{}
-	return &t, err
+	return &Telegram{
+		bot:        bot,
+		handlers:   map[string]Handler{},
+		repo:       repo,
+		hashHelper: hashHelper,
+	}, nil
 }
 
 func (t *Telegram) ConfigBot() {

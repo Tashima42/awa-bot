@@ -5,9 +5,9 @@ import (
 	"database/sql"
 	"fmt"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
-	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx"
 	"github.com/pkg/errors"
+	"github.com/tashima42/awa-bot/bot/pkg/auth"
 	"github.com/tashima42/awa-bot/bot/pkg/db"
 	"log"
 	"strconv"
@@ -418,16 +418,36 @@ func (t *Telegram) registerApiKeyHandler() (string, Handler) {
 			}
 			ctx, cancel := context.WithCancel(context.Background())
 			defer cancel()
+			tx, err := t.repo.BeginTxx(ctx, nil)
+			if err != nil {
+				return errors.Wrap(err, "failed to begin db transaction")
+			}
 			if tgCtx == nil || tgCtx.user == nil {
 				return errors.New("context or user missing")
 			}
-			apiKey := uuid.NewString()
-			err := t.repo.RegisterApiKey(ctx, db.Auth{UserID: tgCtx.user.Id, ApiKey: apiKey})
+			_, err = t.repo.GetApiKeyByUserIdTxx(tx, tgCtx.user.Id)
+			if err != nil {
+				if !strings.Contains(err.Error(), "no rows in result set") {
+					return err
+				}
+			} else {
+				t.SendMessage(message.Chat.ID, "You already have an api key, go back in your history to get it, or use /delete_apikey to invalidate and get a new one", nil)
+				return nil
+			}
+			apiKey := auth.NewUUID()
+			apiKeyHash, err := t.hashHelper.Hash(apiKey)
+			if err != nil {
+				return err
+			}
+			err = t.repo.RegisterApiKeyTxx(tx, db.Auth{UserID: tgCtx.user.Id, ApiKey: apiKeyHash})
 			if err != nil {
 				if strings.Contains(err.Error(), "duplicate key value violates unique constraint") {
-					t.SendMessage(message.Chat.ID, "You already have an api key, go back in your history to get it, or use /delete_apikey to invalidate and get a new one", nil)
 					return nil
 				}
+				return err
+			}
+			err = tx.Commit()
+			if err != nil {
 				return err
 			}
 			t.SendMessage(message.Chat.ID, "Done, your api key has been registered", nil)
