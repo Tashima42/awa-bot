@@ -456,7 +456,7 @@ func (t *Telegram) registerApiKeyHandler() (string, Handler) {
 			t.SendMessage(message.Chat.ID, apiKey, nil)
 			t.SendMessage(message.Chat.ID, "Please keep it safe, you will not be able to get it back", nil)
 			t.SendMessage(message.Chat.ID, "You can use /delete_apikey to invalidate it and get a new one", nil)
-			t.SendMessage(message.Chat.ID, "For api usage instructions, check /api", nil)
+			t.SendMessage(message.Chat.ID, "For api usage instructions, check /api_instructions", nil)
 			return nil
 		},
 	}
