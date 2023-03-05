@@ -3,7 +3,7 @@ package main
 import (
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
-	awaapi "github.com/tashima42/awa-bot/bot/api/cmd/awa-api"
+	"github.com/tashima42/awa-bot/bot/api/cmd/awa-api"
 	awabot "github.com/tashima42/awa-bot/bot/cmd/awa-bot"
 	"github.com/tashima42/awa-bot/bot/pkg/db"
 	"log"
