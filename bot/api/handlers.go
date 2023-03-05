@@ -21,7 +21,7 @@ func NewHandler(repo *db.Repo, hashHelper *auth.HashHelper) *Handler {
 
 func (h *Handler) RegisterWater(c *gin.Context) {
 	var registerWaterInput RegisterWaterInput
-	if err := c.BindJSON(&registerWaterInput); err != nil {
+	if err := c.ShouldBindJSON(&registerWaterInput); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
@@ -30,10 +30,10 @@ func (h *Handler) RegisterWater(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "missing user in context"})
 		return
 	}
-	user := ctxUser.(db.User)
+	user := ctxUser.(*db.User)
 	err := h.repo.RegisterWater(c, db.Water{
 		UserId: user.Id,
-		Amount: registerWaterInput.Amount,
+		Amount: *registerWaterInput.Amount,
 	})
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
