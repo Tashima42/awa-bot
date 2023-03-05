@@ -31,6 +31,8 @@ spec:
               value: postgres-cluster-ip-service
             - name: DB_PORT
               value: '5432'
+            - name: GIN_MODE
+              value: release
             - name: DB_PASSWORD
               valueFrom:
                 secretKeyRef:
