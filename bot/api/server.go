@@ -12,11 +12,14 @@ func Serve(repo *db.Repo, hashHelper *auth.HashHelper) {
 
 	r := gin.Default()
 	r.SetTrustedProxies(nil)
+	r.Use(handler.CORSMiddleware)
 
 	r.GET("/ping", func(c *gin.Context) { c.JSON(http.StatusOK, gin.H{"message": "pong"}) })
 
 	r.Use(handler.AuthMiddleware)
 	r.POST("/water", handler.RegisterWater)
+	r.GET("/water", handler.GetWater)
+	r.GET("/whoami", handler.WhoAmI)
 
 	r.Run(":8096")
 }

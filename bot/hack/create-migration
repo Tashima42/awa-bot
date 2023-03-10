@@ -1,8 +1,10 @@
 #!/bin/bash
 
+DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
+
 if [[ "$1" == "" ]]; then
   echo "must specify a title (no spaces)"
   exit 1
 fi
 
-migrate create -dir bot/pkg/db/schema_migrations -ext sql $1
+migrate create -dir $DIR/../pkg/db/schema_migrations -ext sql $1

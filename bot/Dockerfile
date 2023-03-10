@@ -1,9 +1,9 @@
 FROM golang:1.19.1-alpine
 
 WORKDIR /app
-COPY ./bot/go.mod ./
-COPY ./bot/go.sum ./
+COPY go.mod ./
+COPY go.sum ./
 RUN go mod download
-COPY ./bot ./
+COPY ./ ./
 RUN go build -o awabot.out
 CMD ./awabot.out ${ARGS}

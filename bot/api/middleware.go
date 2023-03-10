@@ -5,11 +5,23 @@ import (
 	"net/http"
 )
 
+func (h *Handler) CORSMiddleware(c *gin.Context) {
+	c.Writer.Header().Set("Access-Control-Allow-Origin", "*")
+	c.Writer.Header().Set("Access-Control-Allow-Credentials", "true")
+	c.Writer.Header().Set("Access-Control-Allow-Headers", "Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization, accept, origin, Cache-Control, X-Requested-With, x-apikey, x-user-id")
+	c.Writer.Header().Set("Access-Control-Allow-Methods", "POST, OPTIONS, GET, PUT")
+
+	if c.Request.Method == "OPTIONS" {
+		c.AbortWithStatus(204)
+		return
+	}
+}
+
 func (h *Handler) AuthMiddleware(c *gin.Context) {
 	var apiKey, userID string
 	var err error
 
-	apiKey = c.GetHeader("Authorization")
+	apiKey = c.GetHeader("x-apikey")
 	if apiKey == "" {
 		apiKey, err = c.Cookie("apikey")
 		if err != nil {
@@ -17,7 +29,7 @@ func (h *Handler) AuthMiddleware(c *gin.Context) {
 			return
 		}
 	}
-	userID = c.GetHeader("X-UserID")
+	userID = c.GetHeader("x-user-id")
 	if userID == "" {
 		userID, err = c.Cookie("userid")
 		if err != nil {

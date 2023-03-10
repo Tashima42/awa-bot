@@ -9,11 +9,11 @@ import (
 )
 
 type User struct {
-	Id         string    `db:"id"`
-	TelegramID int64     `db:"telegram_id"`
-	Name       string    `db:"name"`
-	CreatedAt  time.Time `db:"created_at"`
-	UpdatedAt  time.Time `db:"updated_at"`
+	Id         string    `db:"id" json:"id"`
+	TelegramID int64     `db:"telegram_id" json:"telegram_id"`
+	Name       string    `db:"name" json:"name"`
+	CreatedAt  time.Time `db:"created_at" json:"created_at"`
+	UpdatedAt  time.Time `db:"updated_at" json:"updated_at"`
 }
 
 func (r *Repo) RegisterUser(ctx context.Context, user User) error {

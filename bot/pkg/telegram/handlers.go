@@ -2,7 +2,9 @@ package telegram
 
 import (
 	"context"
+	"crypto/rand"
 	"database/sql"
+	"encoding/base64"
 	"fmt"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	"github.com/jmoiron/sqlx"
@@ -526,6 +528,7 @@ func (t *Telegram) helpMessage(message *tgbotapi.Message, _ *TgContext, _ *tgbot
 /delete_apikey: Delete your api key
 /userid: Get your internal bot user id
 /api_instructions: Get Api usage instructions
+/create_auth_code: Create auth code
 `,
 		nil,
 	)
@@ -614,4 +617,20 @@ func percentageBar(percentage float64) string {
 		}
 	}
 	return fmt.Sprintf("%s %.1f%s", bar, percentage, "%")
+}
+
+func generateRandomBytes(n int) ([]byte, error) {
+	b := make([]byte, n)
+	_, err := rand.Read(b)
+	// Note that err == nil only if we read len(b) bytes.
+	if err != nil {
+		return nil, err
+	}
+
+	return b, nil
+}
+
+func generateRandomString(s int) (string, error) {
+	b, err := generateRandomBytes(s)
+	return base64.URLEncoding.EncodeToString(b), err
 }
