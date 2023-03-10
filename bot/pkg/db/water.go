@@ -9,11 +9,11 @@ import (
 )
 
 type Water struct {
-	Id        string    `db:"id"`
-	UserId    string    `db:"user_id"`
-	Amount    int       `db:"amount"`
-	CreatedAt time.Time `db:"created_at"`
-	UpdatedAt time.Time `db:"updated_at"`
+	Id        string    `db:"id" json:"id"`
+	UserId    string    `db:"user_id" json:"user_id"`
+	Amount    int       `db:"amount" json:"amount"`
+	CreatedAt time.Time `db:"created_at" json:"created_at"`
+	UpdatedAt time.Time `db:"updated_at" json:"updated_at"`
 }
 
 type TimePast string
@@ -50,6 +50,42 @@ func (r *Repo) GetUserAmountTxx(tx *sqlx.Tx, userID string, timePast TimePast) (
 	}
 	fmt.Println(amount)
 	return &amount, nil
+}
+
+func (r *Repo) GetUserWaterPaginated(ctx context.Context, userID string, limit int, skip int) (water []*Water, total int, err error) {
+	tx, err := r.BeginTxx(ctx, nil)
+	if err != nil {
+		return nil, 0, err
+	}
+	defer tx.Commit() //nolint:errcheck
+	return r.GetUserWaterPaginatedTxx(tx, userID, limit, skip)
+}
+
+func (r *Repo) GetUserWaterPaginatedTxx(tx *sqlx.Tx, userID string, limit int, skip int) (water []*Water, total int, err error) {
+	var waters []*Water
+	var count int
+	query := `SELECT 
+					id, 	
+					user_id, 
+					amount, 
+					created_at, 
+					updated_at 
+				FROM water 
+				WHERE user_id = $1 
+				ORDER BY created_at DESC 
+				LIMIT $2 
+				OFFSET $3`
+	countQuery := "SELECT COUNT(*) FROM water WHERE user_id = $1"
+	err = tx.Select(&waters, query, userID, limit, skip)
+	if err != nil {
+		return nil, 0, err
+	}
+	err = tx.Get(&count, countQuery, userID)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	return waters, count, nil
 }
 
 func todayAtMidnight() string {

@@ -80,3 +80,43 @@ func (r *Repo) GetUserByIDTxx(tx *sqlx.Tx, userID string) (*User, error) {
 	err := tx.Get(record, query, userID)
 	return record, err
 }
+
+func (r *Repo) GetUserByCode(ctx context.Context, code string) (*User, error) {
+	tx, err := r.BeginTxx(ctx, &sql.TxOptions{ReadOnly: true})
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to begin db transaction")
+	}
+	defer tx.Commit() //nolint:errcheck
+	return r.GetUserByCodeTxx(tx, code)
+}
+
+func (r *Repo) GetUserByCodeTxx(tx *sqlx.Tx, code string) (*User, error) {
+	query := `SELECT 
+		u.id AS id, 
+		u.telegram_id AS telegram_id, 
+		u.created_at AS created_at, 
+		u.updated_at AS updated_at 
+	FROM user_code c
+	JOIN users u ON u.id = c.user_id
+	WHERE c.code = $1 
+	AND c.valid = true
+	LIMIT 1;`
+	record := &User{}
+	err := tx.Get(record, query, code)
+	return record, err
+}
+
+func (r *Repo) CreateUserCode(ctx context.Context, userID string, code string) error {
+	tx, err := r.BeginTxx(ctx, &sql.TxOptions{ReadOnly: false})
+	if err != nil {
+		return errors.Wrap(err, "failed to begin db transaction")
+	}
+	defer tx.Commit() //nolint:errcheck
+	return r.CreateUserCodeTxx(tx, userID, code)
+}
+
+func (r *Repo) CreateUserCodeTxx(tx *sqlx.Tx, userID string, code string) error {
+	query := `INSERT INTO user_code (user_id, code) VALUES ($1, $2);`
+	_, err := tx.Exec(query, userID, code)
+	return err
+}
