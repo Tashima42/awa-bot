@@ -19,6 +19,7 @@ func Serve(repo *db.Repo, hashHelper *auth.HashHelper) {
 	r.Use(handler.AuthMiddleware)
 	r.POST("/water", handler.RegisterWater)
 	r.GET("/water", handler.GetWater)
+	r.GET("/whoami", handler.WhoAmI)
 
 	r.Run(":8096")
 }

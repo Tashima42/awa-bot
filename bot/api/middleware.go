@@ -18,47 +18,34 @@ func (h *Handler) CORSMiddleware(c *gin.Context) {
 }
 
 func (h *Handler) AuthMiddleware(c *gin.Context) {
-	var apiKey, userID, token string
+	var apiKey, userID string
 	var err error
 
 	apiKey = c.GetHeader("x-apikey")
 	if apiKey == "" {
 		apiKey, err = c.Cookie("apikey")
 		if err != nil {
-			token, err = c.Cookie("token")
-			if err != nil {
-				token = ""
-				c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized: Missing apikey"})
-				return
-			}
+			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized: Missing apikey"})
+			return
 		}
 	}
-	if token != "" {
-		token, err := h.jwtHelper.VerifyToken(token)
+	userID = c.GetHeader("x-user-id")
+	if userID == "" {
+		userID, err = c.Cookie("userid")
 		if err != nil {
-			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized: Invalid token"})
+			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized: Missing user id"})
 			return
 		}
-		userID = token.UserID
-	} else {
-		userID = c.GetHeader("x-user-id")
-		if userID == "" {
-			userID, err = c.Cookie("userid")
-			if err != nil {
-				c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized: Missing user id"})
-				return
-			}
-		}
+	}
 
-		userApiKey, err := h.repo.GetApiKeyByUserId(c, userID)
-		if err != nil {
-			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized: Invalid apikey"})
-			return
-		}
-		if valid, err := h.hashHelper.Verify(apiKey, userApiKey); err != nil || !valid {
-			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized: Invalid apikey"})
-			return
-		}
+	userApiKey, err := h.repo.GetApiKeyByUserId(c, userID)
+	if err != nil {
+		c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized: Invalid apikey"})
+		return
+	}
+	if valid, err := h.hashHelper.Verify(apiKey, userApiKey); err != nil || !valid {
+		c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized: Invalid apikey"})
+		return
 	}
 	user, err := h.repo.GetUserByID(c, userID)
 	if err != nil {

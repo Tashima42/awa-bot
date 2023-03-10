@@ -6,22 +6,21 @@ function getAuthProvider(apiUrl: string): AuthProvider {
     return {
         login(params: any): Promise<void> {
             const { username, password } = params;
-            const url = `${apiUrl}/login`;
-            const prom = httpClient(url, {
-                method: 'POST',
-                body: JSON.stringify({ code: password }),
-                headers: new Headers({ 'Content-Type': 'application/json' }),
-            }).then((params) => {
-                const { status, json } = params
-                if (status == 200) {
-                    localStorage.setItem('userID', json.userID);
-                } else if (status == 401) {
-                    localStorage.setItem('userID', username);
-                    localStorage.setItem('apikey', password);
-                    params.status = 200
+            const url = `${apiUrl}/whoami`;
+            return httpClient(url, {
+                method: 'GET',
+                headers: new Headers({
+                    'Content-Type': 'application/json',
+                    'x-user-id': username,
+                    'x-apikey': password,
+                }),
+            }).then(({ status}) => {
+                if (status !== 200) {
+                    return Promise.reject();
                 }
+                localStorage.setItem('userID', username);
+                localStorage.setItem('apikey', password);
             })
-            return prom
         },
         checkAuth(): Promise<void> {
             const userID = localStorage.getItem('userID');

@@ -25,3 +25,7 @@ type LoginOutput struct {
 	Success bool   `json:"success"`
 	UserID  string `json:"userID"`
 }
+
+type WhoAmIOutput struct {
+	User db.User `json:"user"`
+}

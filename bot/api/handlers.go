@@ -76,3 +76,15 @@ func (h *Handler) GetWater(c *gin.Context) {
 	}
 	c.JSON(http.StatusOK, GetWaterOutput{Waters: waters, Total: total})
 }
+
+// GET /whoami
+// get user info
+func (h *Handler) WhoAmI(c *gin.Context) {
+	ctxUser, exists := c.Get("user")
+	if !exists {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "missing user in context"})
+		return
+	}
+	user := ctxUser.(*db.User)
+	c.JSON(http.StatusOK, WhoAmIOutput{User: *user})
+}
