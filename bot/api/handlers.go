@@ -11,14 +11,12 @@ import (
 type Handler struct {
 	repo       *db.Repo
 	hashHelper *auth.HashHelper
-	jwtHelper  *auth.JWTHelper
 }
 
-func NewHandler(repo *db.Repo, hashHelper *auth.HashHelper, jwtHelper *auth.JWTHelper) *Handler {
+func NewHandler(repo *db.Repo, hashHelper *auth.HashHelper) *Handler {
 	return &Handler{
 		repo:       repo,
 		hashHelper: hashHelper,
-		jwtHelper:  jwtHelper,
 	}
 }
 
@@ -77,32 +75,4 @@ func (h *Handler) GetWater(c *gin.Context) {
 		waters[i] = *water
 	}
 	c.JSON(http.StatusOK, GetWaterOutput{Waters: waters, Total: total})
-}
-
-// POST /login
-// login user
-func (h *Handler) Login(c *gin.Context) {
-	var loginInput LoginInput
-	if err := c.ShouldBindJSON(&loginInput); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
-	}
-	user, err := h.repo.GetUserByCode(c, loginInput.Code)
-	if err != nil {
-		if err.Error() == "sql: no rows in result set" {
-			c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid code"})
-			return
-		}
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
-	}
-
-	token, err := h.jwtHelper.GenerateToken(auth.Token{UserID: user.Id})
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
-	}
-
-	c.SetCookie("Token", token, 60*60*24*7, "/", "127.0.0.1:8096", true, true)
-	c.JSON(http.StatusOK, LoginOutput{Success: true, UserID: user.Id})
 }

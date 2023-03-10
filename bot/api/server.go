@@ -7,15 +7,14 @@ import (
 	"net/http"
 )
 
-func Serve(repo *db.Repo, hashHelper *auth.HashHelper, jwtHelper *auth.JWTHelper) {
-	handler := NewHandler(repo, hashHelper, jwtHelper)
+func Serve(repo *db.Repo, hashHelper *auth.HashHelper) {
+	handler := NewHandler(repo, hashHelper)
 
 	r := gin.Default()
 	r.SetTrustedProxies(nil)
 	r.Use(handler.CORSMiddleware)
 
 	r.GET("/ping", func(c *gin.Context) { c.JSON(http.StatusOK, gin.H{"message": "pong"}) })
-	r.POST("/login", handler.Login)
 
 	r.Use(handler.AuthMiddleware)
 	r.POST("/water", handler.RegisterWater)

@@ -35,7 +35,6 @@ func (t *Telegram) RegisterHandlers() {
 	t.AddHandler(t.deleteApiKeyHandler())
 	t.AddHandler(t.userIDHandler())
 	t.AddHandler(t.apiInstructionsHandler())
-	t.AddHandler(t.createAuthCodeHandler())
 }
 
 func (t *Telegram) askForCompetitionDurationKeyboardHandler() (string, Handler) {
@@ -581,31 +580,6 @@ Instead of using cookies, you can also send both as Headers, using the keys:
 
 Authorization: {/apikey}
 X-UserID: {/userid}`, nil)
-			return nil
-		},
-	}
-}
-
-func (t *Telegram) createAuthCodeHandler() (string, Handler) {
-	return "create_auth_code", Handler{
-		command: true,
-		hydrate: true,
-		exec: func(message *tgbotapi.Message, tgCtx *TgContext, _ *tgbotapi.CallbackQuery) error {
-			if tgCtx == nil || tgCtx.user == nil {
-				return errors.New("context or user missing")
-			}
-			ctx, cancel := context.WithCancel(context.Background())
-			defer cancel()
-			code, err := generateRandomString(32)
-			if err != nil {
-				return err
-			}
-			err = t.repo.CreateUserCode(ctx, tgCtx.user.Id, code)
-			if err != nil {
-				return err
-			}
-			t.SendMessage(message.Chat.ID, "Your auth code is:", nil)
-			t.SendMessage(message.Chat.ID, code, nil)
 			return nil
 		},
 	}
