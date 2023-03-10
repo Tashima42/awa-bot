@@ -1,0 +1,20 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: admin-deployment
+  namespace: awa-bot
+spec:
+  replicas: 1
+  selector:
+      matchLabels:
+      component: admin
+  template:
+    metadata:
+      labels:
+        component: admin
+    spec:
+      terminationGracePeriodSeconds: 30
+      containers:
+        - name: admin
+          image: ghcr.io/tashima42/awa-admin:main
+          imagePullPolicy: "Always"

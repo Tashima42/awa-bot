@@ -12,6 +12,14 @@ env:
 jobs:
   build-and-push-image:
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - dockerfile: ./bot/Dockerfile
+            image: ghcr.io/tashima42/awa-bot
+          - dockerfile: ./admin/Dockerfile
+            image: ghcr.io/tashima42/awa-admin
     permissions:
       contents: read
       packages: write
@@ -30,13 +38,13 @@ jobs:
         id: meta
         uses: docker/metadata-action@v4
         with:
-          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
-
+          images: ${{ matrix.image }}
 
       - name: Build and push Docker image
         uses: docker/build-push-action@v3
         with:
           context: .
+          file: ${{ matrix.dockerfile }}
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}

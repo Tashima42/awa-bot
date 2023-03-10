@@ -1,0 +1,16 @@
+apiVersion: traefik.containo.us/v1alpha1
+kind: IngressRoute
+metadata:
+  name: awa-admin-ingressroute
+  namespace: awa-bot
+spec:
+  entryPoints:
+    - websecure
+  tls:
+    secretName: awa-admin-crt
+  routes:
+    - kind: Rule
+      match: Host("awa-admin.tashima.space")
+      services:
+        - name: admin-service
+          port: 8080
