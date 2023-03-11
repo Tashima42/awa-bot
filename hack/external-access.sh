@@ -10,6 +10,7 @@ kubectl apply -f "$WORKDIR/awa-api-web.yaml"
 kubectl apply -f "$WORKDIR/awa-api-certificate.yaml"
 kubectl apply -f "$WORKDIR/awa-api-ingressroute.yaml"
 # admin
+kubectl apply -f "$WORKDIR/admin-cert-manager.yaml"
 kubectl apply -f "$WORKDIR/awa-admin-ingress.yaml"
 kubectl apply -f "$WORKDIR/awa-admin-redirect.yaml"
 kubectl apply -f "$WORKDIR/awa-admin-web.yaml"
