@@ -8,6 +8,6 @@ spec:
   - 'awa-admin.tashima.space'
   issuerRef:
     kind: Issuer
-    name: awa-bot-http
+    name: awa-admin-http
   secretName: awa-admin-crt
 
