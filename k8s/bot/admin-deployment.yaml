@@ -7,7 +7,7 @@ spec:
   replicas: 1
   selector:
       matchLabels:
-      component: admin
+        component: admin
   template:
     metadata:
       labels:
