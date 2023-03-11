@@ -1,8 +1,8 @@
 apiVersion: cert-manager.io/v1
 kind: Certificate
 metadata:
-  name: awa-api-certificate
-  namespace: kube-system
+  name: awa-admin-certificate
+  namespace: awa-bot
 spec:
   dnsNames:
   - 'awa-admin.tashima.space'
